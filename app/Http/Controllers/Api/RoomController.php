@@ -48,6 +48,12 @@ class RoomController extends Controller
     {
         $this->authorize('delete', $room);
 
+        if ($room->status === \App\Enums\RoomStatus::OCCUPIED) {
+            return response()->json([
+                'message' => 'Tidak dapat menghapus kamar yang sedang dihuni. Silakan check-out penyewa terlebih dahulu.'
+            ], 422);
+        }
+
         $room->delete();
         return response()->json(['message' => 'Room deleted']);
     }
