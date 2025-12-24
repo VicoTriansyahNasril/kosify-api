@@ -27,6 +27,21 @@ class PublicController extends Controller
             });
         }
 
+        if ($request->has('min_price') || $request->has('max_price')) {
+            $min = $request->input('min_price', 0);
+            $max = $request->input('max_price', 999999999);
+
+            $query->whereHas('rooms', function ($q) use ($min, $max) {
+                $q->whereBetween('price', [$min, $max]);
+            });
+        }
+
+        if ($facilities = $request->input('facilities')) {
+            foreach ($facilities as $facility) {
+                $query->whereJsonContains('facilities', $facility);
+            }
+        }
+
         $boardingHouses = $query->latest()->paginate(12);
 
         return BoardingHouseResource::collection($boardingHouses);

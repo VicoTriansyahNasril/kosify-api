@@ -13,6 +13,7 @@ class TransactionResource extends JsonResource
             'id' => $this->id,
             'invoice_number' => $this->invoice_number,
             'tenant_name' => $this->tenant->name ?? 'Unknown',
+            'tenant_phone' => $this->tenant->phone ?? '',
             'room_name' => $this->room->name ?? '-',
             'type' => $this->type,
             'type_label' => ucfirst($this->type->value),

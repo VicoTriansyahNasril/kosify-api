@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Tenant\StoreTenantRequest;
+use App\Http\Requests\Tenant\UpdateTenantRequest;
 use App\Http\Resources\TenantResource;
 use App\Models\BoardingHouse;
 use App\Models\Tenant;
@@ -21,8 +22,7 @@ class TenantController extends Controller
 
     public function index(BoardingHouse $boardingHouse)
     {
-        if ($boardingHouse->user_id !== auth()->id())
-            abort(403);
+        $this->authorize('view', $boardingHouse);
 
         $tenants = Tenant::whereHas('room', function ($q) use ($boardingHouse) {
             $q->where('boarding_house_id', $boardingHouse->id);
@@ -33,15 +33,24 @@ class TenantController extends Controller
 
     public function store(StoreTenantRequest $request)
     {
+
         $tenant = $this->tenantService->checkIn($request->validated());
+
+        return new TenantResource($tenant);
+    }
+
+    public function update(UpdateTenantRequest $request, Tenant $tenant)
+    {
+        $this->authorize('update', $tenant);
+
+        $tenant->update($request->validated());
 
         return new TenantResource($tenant);
     }
 
     public function destroy(Tenant $tenant): JsonResponse
     {
-        if ($tenant->room->boardingHouse->user_id !== auth()->id())
-            abort(403);
+        $this->authorize('delete', $tenant);
 
         $this->tenantService->checkOut($tenant);
 

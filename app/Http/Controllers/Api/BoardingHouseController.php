@@ -39,15 +39,15 @@ class BoardingHouseController extends Controller
 
     public function show(BoardingHouse $boardingHouse)
     {
-        if ($boardingHouse->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access to this property');
-        }
+        $this->authorize('view', $boardingHouse);
 
         return new BoardingHouseResource($boardingHouse->loadCount('rooms'));
     }
 
     public function update(UpdateBoardingHouseRequest $request, BoardingHouse $boardingHouse)
     {
+        $this->authorize('update', $boardingHouse);
+
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
@@ -63,9 +63,7 @@ class BoardingHouseController extends Controller
 
     public function destroy(BoardingHouse $boardingHouse)
     {
-        if ($boardingHouse->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
-        }
+        $this->authorize('delete', $boardingHouse);
 
         if ($boardingHouse->cover_image) {
             Storage::disk('public')->delete($boardingHouse->cover_image);

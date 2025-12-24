@@ -14,9 +14,7 @@ class RoomController extends Controller
 {
     public function index(BoardingHouse $boardingHouse)
     {
-        if ($boardingHouse->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $this->authorize('view', $boardingHouse);
 
         $rooms = $boardingHouse->rooms()
             ->with('activeTenant')
@@ -28,9 +26,9 @@ class RoomController extends Controller
 
     public function store(StoreRoomRequest $request)
     {
-        $boardingHouse = BoardingHouse::where('id', $request->boarding_house_id)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        $boardingHouse = BoardingHouse::findOrFail($request->boarding_house_id);
+
+        $this->authorize('update', $boardingHouse);
 
         $room = $boardingHouse->rooms()->create($request->validated());
 
@@ -39,9 +37,7 @@ class RoomController extends Controller
 
     public function update(UpdateRoomRequest $request, Room $room)
     {
-        if ($room->boardingHouse->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $this->authorize('update', $room);
 
         $room->update($request->validated());
 
@@ -50,9 +46,7 @@ class RoomController extends Controller
 
     public function destroy(Room $room)
     {
-        if ($room->boardingHouse->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $this->authorize('delete', $room);
 
         $room->delete();
         return response()->json(['message' => 'Room deleted']);

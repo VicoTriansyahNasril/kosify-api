@@ -21,8 +21,7 @@ class TransactionController extends Controller
 
     public function index(BoardingHouse $boardingHouse)
     {
-        if ($boardingHouse->user_id !== auth()->id())
-            abort(403);
+        $this->authorize('view', $boardingHouse);
 
         $transactions = Transaction::forBoardingHouse($boardingHouse->id)
             ->with(['tenant', 'room'])
@@ -41,8 +40,7 @@ class TransactionController extends Controller
 
     public function updateStatus(UpdateTransactionStatusRequest $request, Transaction $transaction)
     {
-        if ($transaction->tenant->room->boardingHouse->user_id !== auth()->id())
-            abort(403);
+        $this->authorize('update', $transaction);
 
         if ($request->status === 'paid') {
             $this->transactionService->markAsPaid($transaction);
@@ -51,5 +49,18 @@ class TransactionController extends Controller
         }
 
         return new TransactionResource($transaction);
+    }
+
+    public function destroy(Transaction $transaction)
+    {
+        $this->authorize('update', $transaction);
+
+        if ($transaction->status !== \App\Enums\TransactionStatus::UNPAID) {
+            return response()->json(['message' => 'Hanya transaksi status Unpaid yang bisa dihapus.'], 403);
+        }
+
+        $transaction->delete();
+
+        return response()->json(['message' => 'Transaksi berhasil dihapus.']);
     }
 }
