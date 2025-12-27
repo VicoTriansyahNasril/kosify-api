@@ -9,6 +9,8 @@ use App\Http\Resources\TransactionResource;
 use App\Models\BoardingHouse;
 use App\Models\Transaction;
 use App\Services\TransactionService;
+use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 
 class TransactionController extends Controller
 {
@@ -19,22 +21,32 @@ class TransactionController extends Controller
         $this->transactionService = $transactionService;
     }
 
-    public function index(BoardingHouse $boardingHouse)
+    public function index(Request $request, BoardingHouse $boardingHouse)
     {
         $this->authorize('view', $boardingHouse);
 
-        $transactions = Transaction::forBoardingHouse($boardingHouse->id)
-            ->with(['tenant', 'room'])
-            ->latest()
-            ->paginate(20);
+        $query = Transaction::forBoardingHouse($boardingHouse->id)
+            ->with(['tenant', 'room']);
 
-        return TransactionResource::collection($transactions);
+        if ($search = $request->input('q')) {
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                    ->orWhereHas('tenant', function ($sq) use ($search) {
+                        $sq->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        return TransactionResource::collection($query->latest()->paginate(20));
     }
 
     public function store(StoreTransactionRequest $request)
     {
         $transaction = $this->transactionService->createManualTransaction($request->validated());
-
         return new TransactionResource($transaction);
     }
 
@@ -60,7 +72,6 @@ class TransactionController extends Controller
         }
 
         $transaction->delete();
-
         return response()->json(['message' => 'Transaksi berhasil dihapus.']);
     }
 }

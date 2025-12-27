@@ -20,13 +20,17 @@ class BoardingHouse extends Model
         'slug',
         'address',
         'description',
+        'category',
         'facilities',
+        'rules',
+        'cover_image',
     ];
 
     protected function casts(): array
     {
         return [
             'facilities' => 'array',
+            'rules' => 'array',
         ];
     }
 

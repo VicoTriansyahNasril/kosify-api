@@ -46,4 +46,9 @@ class Room extends Model
     {
         return $this->hasOne(Tenant::class)->where('status', 'active')->latest();
     }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(RoomImage::class);
+    }
 }

@@ -12,6 +12,16 @@ class BoardingHouseResource extends JsonResource
     {
         $cheapestRoom = $this->rooms->sortBy('price')->first();
         $startPrice = $cheapestRoom ? $cheapestRoom->price : 0;
+        $imageUrl = 'https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image';
+
+        if ($this->cover_image) {
+            $url = Storage::url($this->cover_image);
+            if (!str_starts_with($url, 'http')) {
+                $imageUrl = rtrim(config('app.url'), '/') . $url;
+            } else {
+                $imageUrl = $url;
+            }
+        }
 
         return [
             'id' => $this->id,
@@ -20,9 +30,8 @@ class BoardingHouseResource extends JsonResource
             'address' => $this->address,
             'description' => $this->description,
             'facilities' => $this->facilities ?? [],
-            'image_url' => $this->cover_image
-                ? Storage::url($this->cover_image)
-                : 'https://placehold.co/600x400/e2e8f0/1e293b?text=No+Image',
+
+            'image_url' => $imageUrl,
 
             'rooms_count' => $this->whenCounted('rooms'),
             'start_from_price' => $startPrice,
