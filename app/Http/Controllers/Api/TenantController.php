@@ -11,7 +11,6 @@ use App\Models\Tenant;
 use App\Services\TenantService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\Builder;
 
 class TenantController extends Controller
 {
@@ -26,18 +25,15 @@ class TenantController extends Controller
     {
         $this->authorize('view', $boardingHouse);
 
-        $query = Tenant::whereHas('room', function ($q) use ($boardingHouse) {
+        $tenants = Tenant::whereHas('room', function ($q) use ($boardingHouse) {
             $q->where('boarding_house_id', $boardingHouse->id);
-        })->with('room');
+        })
+            ->with('room:id,name')
+            ->search($request->input('q'))
+            ->latest()
+            ->get();
 
-        if ($search = $request->input('q')) {
-            $query->where(function (Builder $q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%");
-            });
-        }
-
-        return TenantResource::collection($query->latest()->get());
+        return TenantResource::collection($tenants);
     }
 
     public function store(StoreTenantRequest $request)

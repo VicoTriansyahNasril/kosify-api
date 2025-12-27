@@ -5,25 +5,32 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $owners = User::where('role', 'owner')
-            ->withCount('boardingHouses')
-            ->latest()
-            ->get();
+        $search = $request->input('q');
+
+        $query = User::where('role', 'owner')
+            ->withCount('boardingHouses');
+
+        if (!empty($search)) {
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
 
         return response()->json([
-            'data' => $owners
+            'data' => $query->latest()->paginate(20)
         ]);
     }
 
-    /**
-     * Super Admin menghapus User (Owner)
-     */
     public function destroy(User $user): JsonResponse
     {
         if ($user->id === auth()->id() || $user->role === 'admin') {

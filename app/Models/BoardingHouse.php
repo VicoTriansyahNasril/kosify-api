@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +25,8 @@ class BoardingHouse extends Model
         'facilities',
         'rules',
         'cover_image',
+        'latitude',
+        'longitude',
     ];
 
     protected function casts(): array
@@ -42,6 +45,30 @@ class BoardingHouse extends Model
                 $model->slug = Str::slug($model->name) . '-' . Str::random(6);
             }
         });
+    }
+
+    public function scopeSearch(Builder $query, ?string $keyword): void
+    {
+        if (!empty($keyword)) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                    ->orWhere('address', 'like', "%{$keyword}%");
+            });
+        }
+    }
+
+    public function scopePriceBetween(Builder $query, int $min, int $max): void
+    {
+        $query->whereHas('rooms', function ($q) use ($min, $max) {
+            $q->whereBetween('price', [$min, $max]);
+        });
+    }
+
+    public function scopeWithFacilities(Builder $query, array $facilities): void
+    {
+        foreach ($facilities as $facility) {
+            $query->whereJsonContains('facilities', $facility);
+        }
     }
 
     public function owner(): BelongsTo

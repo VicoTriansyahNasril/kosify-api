@@ -10,7 +10,6 @@ use App\Models\BoardingHouse;
 use App\Models\Transaction;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\Builder;
 
 class TransactionController extends Controller
 {
@@ -25,23 +24,17 @@ class TransactionController extends Controller
     {
         $this->authorize('view', $boardingHouse);
 
-        $query = Transaction::forBoardingHouse($boardingHouse->id)
-            ->with(['tenant', 'room']);
+        $transactions = Transaction::forBoardingHouse($boardingHouse->id)
+            ->with([
+                'tenant:id,name,phone',
+                'room:id,name'
+            ])
+            ->search($request->input('q'))
+            ->status($request->input('status'))
+            ->latest()
+            ->paginate(20);
 
-        if ($search = $request->input('q')) {
-            $query->where(function (Builder $q) use ($search) {
-                $q->where('invoice_number', 'like', "%{$search}%")
-                    ->orWhereHas('tenant', function ($sq) use ($search) {
-                        $sq->where('name', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        if ($status = $request->input('status')) {
-            $query->where('status', $status);
-        }
-
-        return TransactionResource::collection($query->latest()->paginate(20));
+        return TransactionResource::collection($transactions);
     }
 
     public function store(StoreTransactionRequest $request)

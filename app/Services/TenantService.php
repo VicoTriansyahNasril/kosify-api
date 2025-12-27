@@ -19,7 +19,6 @@ class TenantService
     public function checkIn(array $data): Tenant
     {
         return DB::transaction(function () use ($data) {
-            // 1. Buat Tenant
             $tenant = Tenant::create($data);
 
             // 2. Update Status Kamar
@@ -38,10 +37,7 @@ class TenantService
     public function checkOut(Tenant $tenant): void
     {
         DB::transaction(function () use ($tenant) {
-            // 1. Kembalikan status kamar jadi Available
             $tenant->room->update(['status' => RoomStatus::AVAILABLE]);
-
-            // 2. Hapus data tenant
             $tenant->delete();
         });
     }

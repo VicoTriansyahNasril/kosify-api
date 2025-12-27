@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RoomStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,20 @@ class Room extends Model
             'status' => RoomStatus::class,
             'capacity' => 'integer',
         ];
+    }
+
+    public function scopeSearch(Builder $query, ?string $keyword): void
+    {
+        if (!empty($keyword)) {
+            $query->where('name', 'like', "%{$keyword}%");
+        }
+    }
+
+    public function scopeStatus(Builder $query, ?string $status): void
+    {
+        if (!empty($status)) {
+            $query->where('status', $status);
+        }
     }
 
     public function boardingHouse(): BelongsTo

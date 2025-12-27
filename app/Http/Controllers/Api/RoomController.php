@@ -8,19 +8,33 @@ use App\Http\Requests\Room\UpdateRoomRequest;
 use App\Http\Resources\RoomResource;
 use App\Models\BoardingHouse;
 use App\Models\Room;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class RoomController extends Controller
 {
+    protected ImageService $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index(Request $request, BoardingHouse $boardingHouse)
     {
         $this->authorize('view', $boardingHouse);
 
-        $query = $boardingHouse->rooms()->with(['activeTenant', 'images']);
+        $search = $request->input('q');
+        $status = $request->input('status');
 
-        if ($search = $request->input('q')) {
+        $query = $boardingHouse->rooms()->with(['activeTenant:id,room_id,name', 'images']);
+
+        if (!empty($search)) {
             $query->where('name', 'like', "%{$search}%");
+        }
+
+        if (!empty($status) && in_array($status, ['available', 'occupied', 'maintenance'])) {
+            $query->where('status', $status);
         }
 
         return RoomResource::collection($query->latest()->get());
@@ -35,7 +49,7 @@ class RoomController extends Controller
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $path = $image->store('room_images', 'public');
+                $path = $this->imageService->upload($image, 'room_images', 1000);
                 $room->images()->create(['image_path' => $path]);
             }
         }
@@ -46,9 +60,7 @@ class RoomController extends Controller
     public function update(UpdateRoomRequest $request, Room $room)
     {
         $this->authorize('update', $room);
-
         $room->update($request->validated());
-
         return new RoomResource($room);
     }
 
@@ -58,12 +70,12 @@ class RoomController extends Controller
 
         if ($room->status === \App\Enums\RoomStatus::OCCUPIED) {
             return response()->json([
-                'message' => 'Tidak dapat menghapus kamar yang sedang dihuni. Silakan check-out penyewa terlebih dahulu.'
+                'message' => 'Tidak dapat menghapus kamar yang sedang dihuni.'
             ], 422);
         }
 
         foreach ($room->images as $img) {
-            Storage::disk('public')->delete($img->image_path);
+            $this->imageService->delete($img->image_path);
         }
 
         $room->delete();

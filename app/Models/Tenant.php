@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,16 @@ class Tenant extends Model
             'entry_date' => 'date',
             'due_date' => 'date',
         ];
+    }
+
+    public function scopeSearch(Builder $query, ?string $keyword): void
+    {
+        if (!empty($keyword)) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                    ->orWhere('phone', 'like', "%{$keyword}%");
+            });
+        }
     }
 
     public function room(): BelongsTo

@@ -50,9 +50,6 @@ class Transaction extends Model
         });
     }
 
-    /**
-     * Filter transaksi milik Boarding House tertentu
-     */
     public function scopeForBoardingHouse(Builder $query, string $boardingHouseId): void
     {
         $query->whereHas('room', function ($q) use ($boardingHouseId) {
@@ -60,6 +57,24 @@ class Transaction extends Model
         });
     }
 
+    public function scopeSearch(Builder $query, ?string $keyword): void
+    {
+        if (!empty($keyword)) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('invoice_number', 'like', "%{$keyword}%")
+                    ->orWhereHas('tenant', function ($sq) use ($keyword) {
+                        $sq->where('name', 'like', "%{$keyword}%");
+                    });
+            });
+        }
+    }
+
+    public function scopeStatus(Builder $query, ?string $status): void
+    {
+        if (!empty($status)) {
+            $query->where('status', $status);
+        }
+    }
 
     public function tenant(): BelongsTo
     {

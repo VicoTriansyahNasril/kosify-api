@@ -7,20 +7,35 @@ use App\Http\Requests\BoardingHouse\StoreBoardingHouseRequest;
 use App\Http\Requests\BoardingHouse\UpdateBoardingHouseRequest;
 use App\Http\Resources\BoardingHouseResource;
 use App\Models\BoardingHouse;
+use App\Services\ImageService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Builder;
 
 class BoardingHouseController extends Controller
 {
+    protected ImageService $imageService;
+
+    public function __construct(ImageService $imageService)
+    {
+        $this->imageService = $imageService;
+    }
+
     public function index(Request $request)
     {
-        $kos = $request->user()
-            ->boardingHouses()
-            ->withCount('rooms')
-            ->latest()
-            ->get();
+        $search = $request->input('q');
 
-        return BoardingHouseResource::collection($kos);
+        $query = $request->user()
+            ->boardingHouses()
+            ->withCount('rooms');
+
+        if (!empty($search)) {
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%");
+            });
+        }
+
+        return BoardingHouseResource::collection($query->latest()->get());
     }
 
     public function store(StoreBoardingHouseRequest $request)
@@ -28,8 +43,11 @@ class BoardingHouseController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('boarding_houses', 'public');
-            $data['cover_image'] = $path;
+            $data['cover_image'] = $this->imageService->upload(
+                $request->file('image'),
+                'boarding_houses',
+                1200
+            );
         }
 
         $kos = $request->user()->boardingHouses()->create($data);
@@ -40,7 +58,6 @@ class BoardingHouseController extends Controller
     public function show(BoardingHouse $boardingHouse)
     {
         $this->authorize('view', $boardingHouse);
-
         return new BoardingHouseResource($boardingHouse->loadCount('rooms'));
     }
 
@@ -51,10 +68,11 @@ class BoardingHouseController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('image')) {
-            if ($boardingHouse->cover_image) {
-                Storage::disk('public')->delete($boardingHouse->cover_image);
-            }
-            $data['cover_image'] = $request->file('image')->store('boarding_houses', 'public');
+            $this->imageService->delete($boardingHouse->cover_image);
+            $data['cover_image'] = $this->imageService->upload(
+                $request->file('image'),
+                'boarding_houses'
+            );
         }
 
         $boardingHouse->update($data);
@@ -65,9 +83,7 @@ class BoardingHouseController extends Controller
     {
         $this->authorize('delete', $boardingHouse);
 
-        if ($boardingHouse->cover_image) {
-            Storage::disk('public')->delete($boardingHouse->cover_image);
-        }
+        $this->imageService->delete($boardingHouse->cover_image);
 
         $boardingHouse->delete();
         return response()->json(['message' => 'Boarding house deleted']);
