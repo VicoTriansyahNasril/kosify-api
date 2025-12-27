@@ -1,59 +1,82 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Kosify API (Backend)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Backend untuk aplikasi manajemen kos (SaaS) berbasis **Laravel 12**. Proyek ini dirancang dengan arsitektur API-First, mendukung performa tinggi dengan caching, indexing database, dan optimasi gambar otomatis.
 
-## About Laravel
+## 🚀 Fitur Utama & Teknologi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+*   **Framework:** Laravel 12
+*   **Database:** MySQL (Menggunakan **ULID** sebagai Primary Key)
+*   **Authentication:** Laravel Sanctum (SPA Authentication)
+*   **Performance:**
+    *   **Database Indexing:** Optimasi query pencarian (Fulltext & B-Tree).
+    *   **Caching:** Implementasi Cache pada endpoint publik (Redis/File driver).
+    *   **Eager Loading:** Mencegah N+1 Query problem.
+*   **Media Handling:**
+    *   **Intervention Image:** Auto-resize & konversi otomatis ke format **WEBP** untuk performa ringan.
+*   **Architecture:** Service Pattern & Skinny Controllers.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🛠️ Prasyarat
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+*   PHP >= 8.2
+*   Composer
+*   MySQL / MariaDB
 
-## Learning Laravel
+## 📦 Cara Install & Menjalankan
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+1.  **Clone Repository**
+    ```bash
+    git clone <repository-url>
+    cd kosify-api
+    ```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+2.  **Install Dependencies**
+    ```bash
+    composer install
+    ```
 
-## Laravel Sponsors
+3.  **Konfigurasi Environment**
+    Salin file `.env.example` menjadi `.env`:
+    ```bash
+    cp .env.example .env
+    ```
+    Sesuaikan konfigurasi database:
+    ```env
+    DB_DATABASE=kosify
+    DB_USERNAME=root
+    DB_PASSWORD=
+    
+    APP_URL=http://localhost:8000
+    FILESYSTEM_DISK=public
+    ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+4.  **Generate Key & Storage Link**
+    Wajib dijalankan agar gambar bisa diakses publik.
+    ```bash
+    php artisan key:generate
+    php artisan storage:link
+    ```
 
-### Premium Partners
+5.  **Migrasi & Seeding Data**
+    Ini akan membuat struktur tabel dan mengisi data dummy (20 Owner, ~1000 Kamar, ~1500 Transaksi) untuk tes performa.
+    ```bash
+    php artisan migrate:fresh --seed
+    ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+6.  **Jalankan Server**
+    ```bash
+    php artisan serve
+    ```
 
-## Contributing
+## 🔑 Akun Demo (Seeder)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+*   **Super Admin:** `admin@kosify.com` / `password`
+*   **Owner:** `kos1@gmail.com` s/d `kos20@gmail.com` / `kos12345`
 
-## Code of Conduct
+## 📝 Dokumentasi API
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+File koleksi Postman tersedia (lihat file `Kosify_Full_API.json` jika ada).
+Base URL: `http://localhost:8000/api`
 
-## Security Vulnerabilities
+## ⚠️ Status Pengembangan
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proyek ini masih dalam tahap pengembangan aktif (Work in Progress).
