@@ -29,6 +29,8 @@ class BoardingHouse extends Model
         'longitude',
     ];
 
+    protected $appends = ['rating_avg'];
+
     protected function casts(): array
     {
         return [
@@ -45,6 +47,20 @@ class BoardingHouse extends Model
                 $model->slug = Str::slug($model->name) . '-' . Str::random(6);
             }
         });
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function getRatingAvgAttribute(): float
+    {
+        if ($this->relationLoaded('reviews')) {
+            return round($this->reviews->avg('rating') ?? 0, 1);
+        }
+
+        return round($this->reviews()->avg('rating') ?? 0, 1);
     }
 
     public function scopeSearch(Builder $query, ?string $keyword): void

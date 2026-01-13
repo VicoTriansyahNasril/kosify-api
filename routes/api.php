@@ -8,25 +8,25 @@ use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\Admin\UserController;
+use App\Http\Controllers\Api\ReviewController;
 use Illuminate\Support\Facades\Route;
 
-// --- PUBLIC ROUTES ---
 Route::get('/explore', [PublicController::class, 'index']);
 Route::get('/explore/{slug}', [PublicController::class, 'show']);
+Route::get('/boarding-houses/{id}/reviews', [ReviewController::class, 'index']);
 
-// --- AUTH ROUTES ---
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/bookings', [App\Http\Controllers\Api\BookingController::class, 'store']);
 
-// --- PROTECTED ROUTES ---
 Route::middleware(['auth:sanctum'])->group(function () {
-    // User Session
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
     Route::post('/profile/delete', [AuthController::class, 'destroy']);
 
-    // Owner Features
+    Route::post('/boarding-houses/{id}/reviews', [ReviewController::class, 'store']);
+
     Route::apiResource('boarding-houses', BoardingHouseController::class);
 
     Route::get('/boarding-houses/{boarding_house}/rooms', [RoomController::class, 'index']);
@@ -42,10 +42,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/transactions/{transaction}/status', [TransactionController::class, 'updateStatus']);
     Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy']);
 
-    // Dashboard Stats
+    Route::get('/boarding-houses/{boarding_house}/bookings', [App\Http\Controllers\Api\BookingController::class, 'index']);
+    Route::patch('/bookings/{booking}/status', [App\Http\Controllers\Api\BookingController::class, 'updateStatus']);
+
     Route::get('/dashboard/stats', [DashboardController::class, 'index']);
 
-    // Admin Features
     Route::middleware(['admin'])->prefix('admin')->group(function () {
         Route::get('/owners', [UserController::class, 'index']);
         Route::delete('/owners/{user}', [UserController::class, 'destroy']);
